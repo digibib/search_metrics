@@ -10,6 +10,9 @@ import re
 import socket
 
 URL = 'https://docs.google.com/spreadsheets/d/1YbCvxDITgfjwWVtm-OIAFkkvGUsyu99ZMbbC3RRiEXQ/export?exportFormat=csv'
+METRICS_HOST     = os.environ.get('METRICS_HOST', 'metrics')
+METRICS_PORT     = os.environ.get('METRICS_PORT', 8089)
+METRICS_INTERVAL = os.environ.get('METRICS_INTERVAL', 600)
 
 def generate_html(results):
     #from string import Template
@@ -43,20 +46,21 @@ def push_metrics(res):
         return
     try:
         for row in res:
-            search_metrics = """search_metrics,host=sputnik,query="%s",link="%s" hits=%f,score=%f""" % (re.escape(row['query']), re.escape(row['searchURL']), row['hits'], row['score'])
-            print search_metrics
-            s.sendto(search_metrics, ('metrics', 8089))
+            search_metrics = """search_metrics,host=sputnik,query="%s",link="%s",hits=%f score=%f""" % (re.escape(row['query']), re.escape(row['searchURL']), row['hits'], row['score'])
+            #print search_metrics
+        s.sendto(search_metrics, (METRICS_HOST, METRICS_PORT))
     except socket.error , msg:
         print 'Could not connect to metrics. Error Code : ' + str(msg[0]) + ' Message ' + msg[1]
     finally:
         s.close()
-        print 'send metrics success!'
+        #print 'send metrics success!'
 
 
 with requests.Session() as s:
+    print "Starting collecting search metrics to {0}:{1} every {2} sec".format(METRICS_HOST, METRICS_PORT, METRICS_INTERVAL)
     import time
     while True:
-        time.sleep(10)  # Run once each minute
+        time.sleep(METRICS_INTERVAL)
         csvfile = s.get(URL)
 
         csvreader = csv.reader(csvfile.iter_lines())
@@ -108,4 +112,3 @@ with requests.Session() as s:
         file.write(generate_html(results))
         file.close()
         push_metrics(results)
-
