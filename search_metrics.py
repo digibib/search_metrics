@@ -9,7 +9,7 @@ import os
 import re
 import socket
 
-URL = 'https://docs.google.com/spreadsheets/d/1YbCvxDITgfjwWVtm-OIAFkkvGUsyu99ZMbbC3RRiEXQ/export?exportFormat=csv'
+CSVURL = 'https://docs.google.com/spreadsheets/d/1YbCvxDITgfjwWVtm-OIAFkkvGUsyu99ZMbbC3RRiEXQ/export?exportFormat=csv'
 METRICS_HOST     = os.environ.get('METRICS_HOST', 'metrics')
 METRICS_PORT     = int(os.environ.get('METRICS_PORT', 8089))
 METRICS_INTERVAL = float(os.environ.get('METRICS_INTERVAL', 600))
@@ -59,7 +59,7 @@ with requests.Session() as s:
     import time
     while True:
         time.sleep(METRICS_INTERVAL)
-        csvfile = s.get(URL)
+        csvfile = s.get(CSVURL)
 
         csvreader = csv.reader(csvfile.iter_lines())
         next(csvreader) # skip header
@@ -106,7 +106,7 @@ with requests.Session() as s:
                     break
 
             results.append(resultMap)
-        file = open("results.html", "w")
+        file = open("html/results.html", "w")
         file.write(generate_html(results))
         file.close()
         push_metrics(results)
