@@ -18,7 +18,7 @@ def generate_html(results):
     #from string import Template
     rows = ''
     for row in results:
-        rows += '<tr><td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</td><td>{4}</td><td><a href="{5}">lenke</a></td></tr>'.format(
+        rows += '<tr><td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</td><td>{4}</td><td><a href="{5}">lenke til søk</a></td></tr>'.format(
             row['query'], row['expectedWork'], row['expectedTitle'], row['score'], row['position'], row['searchURL']
             )
 
@@ -26,7 +26,7 @@ def generate_html(results):
     <body>
     <table>
         <thead>
-            <tr><th>søk</th><th>forventet verk</th><th>forventet tittel</th><th>score</th><th>plassering</th><th>lenke</th></tr>
+            <tr><th>Søk</th><th>Forventet verk</th><th>Forventet tittel</th><th>Score</th><th>Pos i treffliste</th><th>Lenke</th></tr>
         </thead>
         <tbody>
             %s
