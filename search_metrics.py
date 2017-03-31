@@ -22,9 +22,7 @@ def generate_html(results):
             row['query'], row['expectedWork'], row['expectedTitle'], row['score'], row['position'], row['searchURL']
             )
 
-    html = """<!DOCTYPE html><html><head><meta charset=utf-8 />
-        <style> body {background-color: lightgreen;} </style>
-        </head>
+    html = """<!DOCTYPE html><html><head><meta charset=utf-8 /></head>
     <body>
     <table>
         <thead>
@@ -46,9 +44,9 @@ def push_metrics(res):
         return
     try:
         for row in res:
-            search_metrics = """search_metrics,host=sputnik,query="%s",link="%s",hits=%f score=%f""" % (re.escape(row['query']), re.escape(row['searchURL']), row['hits'], row['score'])
-            #print search_metrics
-        s.sendto(search_metrics, (METRICS_HOST, METRICS_PORT))
+            search_metrics = """search_metrics,host=sputnik,query="%s",link="%s" hits=%d,score=%f""" % (re.escape(row['query']), re.escape(row['searchURL']), row['hits'], row['score'])
+            print search_metrics
+            s.sendto(search_metrics, (METRICS_HOST, METRICS_PORT))
     except socket.error , msg:
         print 'Could not connect to metrics. Error Code : ' + str(msg[0]) + ' Message ' + msg[1]
     finally:
