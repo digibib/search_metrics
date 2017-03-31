@@ -11,8 +11,8 @@ import socket
 
 URL = 'https://docs.google.com/spreadsheets/d/1YbCvxDITgfjwWVtm-OIAFkkvGUsyu99ZMbbC3RRiEXQ/export?exportFormat=csv'
 METRICS_HOST     = os.environ.get('METRICS_HOST', 'metrics')
-METRICS_PORT     = os.environ.get('METRICS_PORT', 8089)
-METRICS_INTERVAL = os.environ.get('METRICS_INTERVAL', 600)
+METRICS_PORT     = int(os.environ.get('METRICS_PORT', 8089))
+METRICS_INTERVAL = float(os.environ.get('METRICS_INTERVAL', 600))
 
 def generate_html(results):
     #from string import Template
