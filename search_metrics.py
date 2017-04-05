@@ -53,7 +53,7 @@ def push_metrics(res):
                 METRICS_HOST, METRICS_DOCKER, METRICS_ENV, row['query'].replace(' ', '\ '), row['hits'], row['position'], row['score'], row['score2']
             )
             print search_metrics
-            #s.sendto(search_metrics, (GRAPH_HOST, GRAPH_PORT))
+            s.sendto(search_metrics, (GRAPH_HOST, GRAPH_PORT))
     except socket.error , msg:
         print 'Could not connect to metrics. Error Code : ' + str(msg[0]) + ' Message ' + msg[1]
     finally:
