@@ -49,8 +49,8 @@ def push_metrics(res):
         return
     try:
         for row in res:
-            search_metrics = """search_metrics,host=%s,docker=%s,env=%s,query="%s",link="%s" hits=%d,score=%f""" % (
-                METRICS_HOST, METRICS_DOCKER, METRICS_ENV, row['query'].replace(' ', '_'), row['searchURL'], row['hits'], row['score']
+            search_metrics = """search_metrics,host=%s,docker=%s,env=%s,query="%s" hits=%d,score=%f""" % (
+                METRICS_HOST, METRICS_DOCKER, METRICS_ENV, row['query'].replace(' ', '\ '), row['hits'], row['score']
             )
             print search_metrics
             s.sendto(search_metrics, (GRAPH_HOST, GRAPH_PORT))
