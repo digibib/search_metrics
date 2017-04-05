@@ -49,17 +49,22 @@ def push_metrics(res):
         return
     try:
         for row in res:
-            search_metrics = """search_metrics,host=%s,docker=%s,env=%s,query="%s" hits=%d,score=%f""" % (
-                METRICS_HOST, METRICS_DOCKER, METRICS_ENV, row['query'].replace(' ', '\ '), row['hits'], row['score']
+            search_metrics = """search_metrics,host=%s,docker=%s,env=%s,query="%s" hits=%d,pos=%d,score=%f,score2=%f""" % (
+                METRICS_HOST, METRICS_DOCKER, METRICS_ENV, row['query'].replace(' ', '\ '), row['hits'], row['position'], row['score'], row['score2']
             )
             print search_metrics
-            s.sendto(search_metrics, (GRAPH_HOST, GRAPH_PORT))
+            #s.sendto(search_metrics, (GRAPH_HOST, GRAPH_PORT))
     except socket.error , msg:
         print 'Could not connect to metrics. Error Code : ' + str(msg[0]) + ' Message ' + msg[1]
     finally:
         s.close()
         #print 'send metrics success!'
 
+def compute_score(idx):
+    return float(3) / (float(2) + float(idx+1))
+
+def compute_score2(idx, hits):
+    return float(10*hits) / float(hits*idx + 50*idx + 10*hits)
 
 with requests.Session() as s:
     print "Starting collecting search metrics to {0}:{1} every {2} sec".format(GRAPH_HOST, GRAPH_PORT, METRICS_INTERVAL)
@@ -107,7 +112,8 @@ with requests.Session() as s:
                     resultMap['key'] = b['key']
                     resultMap['max_score'] = b['publications']['hits']['max_score']
                     resultMap['position'] = idx+1
-                    resultMap['score'] = float(3) / (float(2) + float(idx+1))
+                    resultMap['score'] = compute_score(idx)
+                    resultMap['score2'] = compute_score2(idx, totalHits)
                     resultMap['title'] = b['publications']['hits']['hits'][0]['_source']['title']
                     resultMap['workMainTitle'] = b['publications']['hits']['hits'][0]['_source']['workMainTitle']
                     break
