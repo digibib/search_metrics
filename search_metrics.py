@@ -98,6 +98,7 @@ with requests.Session() as s:
                 'searchURL': searchURL,
                 'hits': totalHits,
                 'score': 0,
+                'score2': 0,
                 'max_score': 0,
                 'position': 0
                 }
