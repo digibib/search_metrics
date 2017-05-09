@@ -9,15 +9,41 @@ import os
 import re
 import socket
 
+from threading import Thread
+from SocketServer import ThreadingMixIn
+from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
+
 CSVURL = 'https://docs.google.com/spreadsheets/d/1YbCvxDITgfjwWVtm-OIAFkkvGUsyu99ZMbbC3RRiEXQ/export?exportFormat=csv'
 GRAPH_HOST     = os.environ.get('GRAPH_HOST', 'metrics')
 GRAPH_PORT     = int(os.environ.get('GRAPH_PORT', 8089))
 
+PORT   = int(os.environ.get('PORT', 9999))
 METRICS_INTERVAL = float(os.environ.get('METRICS_INTERVAL', 600))
 METRICS_HOST     = os.environ.get('METRICS_HOST', 'localhost')
 METRICS_DOCKER   = os.environ.get('METRICS_DOCKER', 'search_metrics')
 METRICS_ENV      = os.environ.get('METRICS_ENV', 'dev')
 
+# Report placeholder
+generatedReport = 'Hello dummy!'
+
+class Handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
+        self.wfile.write(generatedReport)
+
+class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
+    pass
+
+def serve_on_port(port):
+    os.chdir('html')
+    print "serving results.html at port", port
+    server = ThreadingHTTPServer(("",port), Handler)
+    server.serve_forever()
+
+# Start off a simple daemon in a separate thread
+Thread(target=serve_on_port, args=[PORT]).start()
 
 def generate_html(results):
     #from string import Template
@@ -121,6 +147,7 @@ with requests.Session() as s:
 
             results.append(resultMap)
         file = open("html/results.html", "w")
-        file.write(generate_html(results))
+        generatedReport = generate_html(results)
+        file.write(generatedReport)
         file.close()
         push_metrics(results)
