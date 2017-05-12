@@ -48,13 +48,15 @@ t.daemon = True
 t.start()
 
 def generate_html(results):
-    #from string import Template
     rows = ''
+    totalscore = 0
     for row in results:
         rows += '<tr><td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</td><td>{4}</td><td><a href="{5}">lenke til søk</a></td></tr>'.format(
             row['query'], row['expectedWork'], row['expectedTitle'], row['score'], row['position'], row['searchURL']
             )
+        totalscore += row['score']
 
+    totals = '<hr><tr><td><strong>totaler</strong></td><td></td><td></td><td>{0} / avg {1}</td><td></td></tr>'.format(totalscore, float(totalscore) / len(results))
     html = """<!DOCTYPE html><html><head><meta charset=utf-8 /></head>
     <body>
     <table>
@@ -63,10 +65,11 @@ def generate_html(results):
         </thead>
         <tbody>
             %s
+            %s
         </tbody>
     </table>
     </body></html>
-    """ % (''.join(rows))
+    """ % (''.join(rows), totals)
     return html
 
 def push_metrics(res):
