@@ -147,8 +147,12 @@ with requests.Session() as s:
                     break
 
             results.append(resultMap)
-        file = open("/app/html/results.html", "w")
+
         generatedReport = generate_html(results)
-        file.write(generatedReport)
-        file.close()
         push_metrics(results)
+        try:
+            file = open("/app/html/results.html", "w")
+            file.write(generatedReport)
+            file.close()
+        except IOError as e:
+            print "Could not open file for writing report. I/O error({0}): {1}".format(e.errno, e.strerror)
