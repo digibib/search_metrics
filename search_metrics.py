@@ -43,7 +43,9 @@ def serve_on_port(port):
     server.serve_forever()
 
 # Start off a simple daemon in a separate thread
-Thread(target=serve_on_port, args=[PORT]).start()
+t = Thread(target=serve_on_port, args=[PORT])
+t.daemon = True
+t.start()
 
 def generate_html(results):
     #from string import Template
@@ -84,7 +86,6 @@ def push_metrics(res):
         print 'Could not connect to metrics. Error Code : ' + str(msg[0]) + ' Message ' + msg[1]
     finally:
         s.close()
-        #print 'send metrics success!'
 
 def compute_score(idx):
     return float(3) / (float(2) + float(idx+1))
@@ -146,7 +147,7 @@ with requests.Session() as s:
                     break
 
             results.append(resultMap)
-        file = open("html/results.html", "w")
+        file = open("/app/html/results.html", "w")
         generatedReport = generate_html(results)
         file.write(generatedReport)
         file.close()
