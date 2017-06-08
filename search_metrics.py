@@ -1,17 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import csv
-import requests
-import urllib
-import itertools
-import json
 import os
-import re
+import requests
 import socket
-
-from threading import Thread
-from SocketServer import ThreadingMixIn
+import urllib
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
+from SocketServer import ThreadingMixIn
+from threading import Thread
 
 CSVURL = 'https://docs.google.com/spreadsheets/d/1YbCvxDITgfjwWVtm-OIAFkkvGUsyu99ZMbbC3RRiEXQ/export?exportFormat=csv'
 GRAPH_HOST     = os.environ.get('GRAPH_HOST', 'metrics')
@@ -22,6 +18,7 @@ METRICS_INTERVAL = float(os.environ.get('METRICS_INTERVAL', 600))
 METRICS_HOST     = os.environ.get('METRICS_HOST', 'localhost')
 METRICS_DOCKER   = os.environ.get('METRICS_DOCKER', 'search_metrics')
 METRICS_ENV      = os.environ.get('METRICS_ENV', 'dev')
+SEARCH_URL       = os.environ.get('SEARCH_URL', 'http://sok.deichman.no')
 
 # Report placeholder
 generatedReport = 'Hello dummy!'
@@ -100,7 +97,6 @@ with requests.Session() as s:
     print "Starting collecting search metrics to {0}:{1} every {2} sec".format(GRAPH_HOST, GRAPH_PORT, METRICS_INTERVAL)
     import time
     while True:
-        time.sleep(METRICS_INTERVAL)
         csvfile = s.get(CSVURL)
 
         csvreader = csv.reader(csvfile.iter_lines())
@@ -113,8 +109,8 @@ with requests.Session() as s:
             expectedTitle = row[2]
             expectedWorkURI  = "http://data.deichman.no/work/{0}".format(expectedWork)
             searchStringEnc  = urllib.urlencode({'query': searchString})
-            searchURL = 'http://sok.deichman.no/search?{0}&showFilter=language&showFilter=mediatype'.format(searchStringEnc)
-            jsonSearchURL = 'http://sok.deichman.no/q?{0}&showFilter=language&showFilter=mediatype'.format(searchStringEnc)
+            searchURL = '{0}/search?{1}&showFilter=language&showFilter=mediatype'.format(SEARCH_URL, searchStringEnc)
+            jsonSearchURL = '{0}/q?{1}&showFilter=language&showFilter=mediatype'.format(SEARCH_URL, searchStringEnc)
 
             res = s.get(jsonSearchURL)
             if res.status_code != requests.codes.ok: next()
@@ -159,3 +155,4 @@ with requests.Session() as s:
             file.close()
         except IOError as e:
             print "Could not open file for writing report. I/O error({0}): {1}".format(e.errno, e.strerror)
+        time.sleep(METRICS_INTERVAL)
