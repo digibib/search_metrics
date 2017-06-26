@@ -114,7 +114,7 @@ with requests.Session() as s:
             jsonSearchURL = '{0}/q?{1}&showFilter=language&showFilter=mediatype'.format(SEARCH_URL, searchStringEnc)
 
             res = s.get(jsonSearchURL)
-            if res.status_code != requests.codes.ok: next()
+            if res.status_code != requests.codes.ok: continue
             js = res.json()
             totalHits = js['hits']['total']
             resultMap = {
