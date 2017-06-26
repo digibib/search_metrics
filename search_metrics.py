@@ -104,6 +104,7 @@ with requests.Session() as s:
 
         results = []
         for row in csvreader:
+            if any( (r is "" or r is None) for r in row[:3]): continue # skip row if missing content in three first columns
             searchString  = row[0]
             expectedWork  = row[1]
             expectedTitle = row[2]
