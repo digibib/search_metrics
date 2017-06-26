@@ -131,21 +131,34 @@ with requests.Session() as s:
                 }
             if totalHits == '0':
                 results.append(resultMap)
-                next()
-            buckets = js['aggregations']['byWork']['buckets']
+                continue
 
-            for idx, b in enumerate(buckets):
-
-                if b['key'] == expectedWorkURI: # match work URI in response
-                    resultMap['key'] = b['key']
-                    resultMap['max_score'] = b['publications']['hits']['max_score']
-                    resultMap['position'] = idx+1
-                    resultMap['score'] = compute_score(idx)
-                    resultMap['score2'] = compute_score2(idx, totalHits)
-                    resultMap['title'] = b['publications']['hits']['hits'][0]['_source']['title']
-                    resultMap['workMainTitle'] = b['publications']['hits']['hits'][0]['_source']['workMainTitle']
-                    break
-
+            # - bucket aggregations by work
+            if 'byWork' in js.get('aggregations', {}):
+                hits = js['aggregations']['byWork']['buckets']
+                for idx, hit in enumerate(hits):
+                    if hit['key'] == expectedWorkURI: # match work URI in response
+                        resultMap['key'] = hit['key']
+                        resultMap['max_score'] = hit['publications']['hits']['max_score']
+                        resultMap['position'] = idx+1
+                        resultMap['score'] = compute_score(idx)
+                        resultMap['score2'] = compute_score2(idx, totalHits)
+                        resultMap['title'] = hit['publications']['hits']['hits'][0]['_source']['title']
+                        resultMap['workMainTitle'] = hit['publications']['hits']['hits'][0]['_source']['workMainTitle']
+                        break
+            # - work hits with publication inner_hits
+            elif 'hits' in js.get('hits', {}):
+                hits = js['hits']['hits']
+                for idx, hit in enumerate(hits):
+                    if hit['_source']['uri'] == expectedWorkURI: # match work URI in response
+                        resultMap['key'] = hit['_source']['uri']
+                        resultMap['max_score'] = hit['inner_hits']['publications']['hits']['max_score']
+                        resultMap['position'] = idx+1
+                        resultMap['score'] = compute_score(idx)
+                        resultMap['score2'] = compute_score2(idx, totalHits)
+                        resultMap['title'] = hit['_source']['displayLine1']
+                        resultMap['workMainTitle'] = hit['_source']['mainTitle']
+                        break
             results.append(resultMap)
 
         generatedReport = generate_html(results)
