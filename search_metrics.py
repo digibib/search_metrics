@@ -82,7 +82,7 @@ def push_metrics(res):
             )
             print search_metrics
             s.sendto(search_metrics, (GRAPH_HOST, GRAPH_PORT))
-    except socket.error , msg:
+    except socket.error, msg:
         print 'Could not connect to metrics. Error Code : ' + str(msg[0]) + ' Message ' + msg[1]
     finally:
         s.close()
@@ -97,76 +97,84 @@ with requests.Session() as s:
     print "Starting collecting search metrics to {0}:{1} every {2} sec".format(GRAPH_HOST, GRAPH_PORT, METRICS_INTERVAL)
     import time
     while True:
-        csvfile = s.get(CSVURL)
-
-        csvreader = csv.reader(csvfile.iter_lines())
-        next(csvreader) # skip header
-
-        results = []
-        for row in csvreader:
-            if any( (r is "" or r is None) for r in row[:3]): continue # skip row if missing content in three first columns
-            searchString  = row[0]
-            expectedWork  = row[1]
-            expectedTitle = row[2]
-            expectedWorkURI  = "http://data.deichman.no/work/{0}".format(expectedWork)
-            searchStringEnc  = urllib.urlencode({'query': searchString})
-            searchURL = '{0}/search?{1}&showFilter=language&showFilter=mediatype'.format(SEARCH_URL, searchStringEnc)
-            jsonSearchURL = '{0}/q?{1}&showFilter=language&showFilter=mediatype'.format(SEARCH_URL, searchStringEnc)
-
-            res = s.get(jsonSearchURL)
-            if res.status_code != requests.codes.ok: continue
-            js = res.json()
-            totalHits = js['hits']['total']
-            resultMap = {
-                'query': searchString,
-                'expectedWork': expectedWork,
-                'expectedWorkURI': expectedWorkURI,
-                'expectedTitle': expectedTitle,
-                'searchURL': searchURL,
-                'hits': totalHits,
-                'score': 0,
-                'score2': 0,
-                'max_score': 0,
-                'position': 0
-                }
-            if totalHits == '0':
-                results.append(resultMap)
-                continue
-
-            # - bucket aggregations by work
-            if 'byWork' in js.get('aggregations', {}):
-                hits = js['aggregations']['byWork']['buckets']
-                for idx, hit in enumerate(hits):
-                    if hit['key'] == expectedWorkURI: # match work URI in response
-                        resultMap['key'] = hit['key']
-                        resultMap['max_score'] = hit['publications']['hits']['max_score']
-                        resultMap['position'] = idx+1
-                        resultMap['score'] = compute_score(idx)
-                        resultMap['score2'] = compute_score2(idx, totalHits)
-                        resultMap['title'] = hit['publications']['hits']['hits'][0]['_source']['title']
-                        resultMap['workMainTitle'] = hit['publications']['hits']['hits'][0]['_source']['workMainTitle']
-                        break
-            # - work hits with publication inner_hits
-            elif 'hits' in js.get('hits', {}):
-                hits = js['hits']['hits']
-                for idx, hit in enumerate(hits):
-                    if hit['_source']['uri'] == expectedWorkURI: # match work URI in response
-                        resultMap['key'] = hit['_source']['uri']
-                        resultMap['max_score'] = hit['inner_hits']['publications']['hits']['max_score']
-                        resultMap['position'] = idx+1
-                        resultMap['score'] = compute_score(idx)
-                        resultMap['score2'] = compute_score2(idx, totalHits)
-                        resultMap['title'] = hit['_source']['displayLine1']
-                        resultMap['workMainTitle'] = hit['_source']['mainTitle']
-                        break
-            results.append(resultMap)
-
-        generatedReport = generate_html(results)
-        push_metrics(results)
         try:
-            file = open("/app/html/results.html", "w")
-            file.write(generatedReport)
-            file.close()
-        except IOError as e:
-            print "Could not open file for writing report. I/O error({0}): {1}".format(e.errno, e.strerror)
-        time.sleep(METRICS_INTERVAL)
+            csvfile = s.get(CSVURL)
+
+            csvreader = csv.reader(csvfile.iter_lines())
+            next(csvreader) # skip header
+
+            results = []
+            for row in csvreader:
+                if any( (r is "" or r is None) for r in row[:3]): continue # skip row if missing content in three first columns
+                searchString  = row[0]
+                expectedWork  = row[1]
+                expectedTitle = row[2]
+                expectedWorkURI  = "http://data.deichman.no/work/{0}".format(expectedWork)
+                searchStringEnc  = urllib.urlencode({'query': searchString})
+                searchURL = '{0}/search?{1}&showFilter=language&showFilter=mediatype'.format(SEARCH_URL, searchStringEnc)
+                jsonSearchURL = '{0}/q?{1}&showFilter=language&showFilter=mediatype'.format(SEARCH_URL, searchStringEnc)
+
+                res = s.get(jsonSearchURL)
+                if res.status_code != requests.codes.ok: continue
+                js = res.json()
+                totalHits = js['hits']['total']
+                resultMap = {
+                    'query': searchString,
+                    'expectedWork': expectedWork,
+                    'expectedWorkURI': expectedWorkURI,
+                    'expectedTitle': expectedTitle,
+                    'searchURL': searchURL,
+                    'hits': totalHits,
+                    'score': 0,
+                    'score2': 0,
+                    'max_score': 0,
+                    'position': 0
+                    }
+                if totalHits == '0':
+                    results.append(resultMap)
+                    continue
+
+                # - bucket aggregations by work
+                if 'byWork' in js.get('aggregations', {}):
+                    hits = js['aggregations']['byWork']['buckets']
+                    for idx, hit in enumerate(hits):
+                        if hit['key'] == expectedWorkURI: # match work URI in response
+                            resultMap['key'] = hit['key']
+                            resultMap['max_score'] = hit['publications']['hits']['max_score']
+                            resultMap['position'] = idx+1
+                            resultMap['score'] = compute_score(idx)
+                            resultMap['score2'] = compute_score2(idx, totalHits)
+                            resultMap['title'] = hit['publications']['hits']['hits'][0]['_source']['title']
+                            resultMap['workMainTitle'] = hit['publications']['hits']['hits'][0]['_source']['workMainTitle']
+                            break
+                # - work hits with publication inner_hits
+                elif 'hits' in js.get('hits', {}):
+                    hits = js['hits']['hits']
+                    for idx, hit in enumerate(hits):
+                        if hit['_source']['uri'] == expectedWorkURI: # match work URI in response
+                            resultMap['key'] = hit['_source']['uri']
+                            resultMap['max_score'] = hit['inner_hits']['publications']['hits']['max_score']
+                            resultMap['position'] = idx+1
+                            resultMap['score'] = compute_score(idx)
+                            resultMap['score2'] = compute_score2(idx, totalHits)
+                            resultMap['title'] = hit['_source']['displayLine1']
+                            resultMap['workMainTitle'] = hit['_source']['mainTitle']
+                            break
+                results.append(resultMap)
+
+                generatedReport = generate_html(results)
+                push_metrics(results)
+            try:
+                file = open("/app/html/results.html", "w")
+                file.write(generatedReport)
+                file.close()
+            except IOError as e:
+                print "Could not open file for writing report. I/O error({0}): {1}".format(e.errno, e.strerror)
+                time.sleep(METRICS_INTERVAL)
+        except requests.exceptions.Timeout:
+            print "Timeout getting google doc CSV, retrying in 15sec."
+            time.sleep(15)
+        except requests.exceptions.RequestException as e:
+            print "Error getting CSV from google({0}): {1}".format(e.errno, e.strerror)
+            print "Retrying in 30 seconds..."
+            time.sleep(30)
